@@ -22,22 +22,39 @@ for fileChanged in fileChangedDirectories:
         numTestFiles += 1
 
 
-def runEvosuite():
-    print('evosuite')
+def runEvosuite(repository_directory, classdirectory):
+
+    if not (os.path.isfile("runGradle.cmd")):
+        cmdf = open("runGradle.cmd", "w+")
+        cmdf.write("gradlew build\n")
+        cmdf.close()
+        subprocess.call([r'runGradle.cmd'])
+
+    cmd = open("runEvosuite.cmd", "w+")
+    cmd.write("cd \"" + ".git\CIS-580-Scripts-main\Tools" + "\"\n")
+    cmd.write("java -jar evosuite.jar -target " + " \"" + repository_directory + classdirectory + "\"")
+    cmd.close()
+
+    subprocess.call([r'runEvosuite.cmd'])
+
+    if os.path.isfile("runEvosuite.cmd"):
+        os.remove("runEvosuite.cmd")
 
 
-def checkCoverage(classdirectory):
+def checkCoverage(repository_directory, classdirectory):
     coverage = 0.0
-    repository_directory = git.Repo('.', search_parent_directories=True).working_tree_dir
+    #   repository_directory = git.Repo('.', search_parent_directories=True).working_tree_dir
 
-    cmdf = open("runGradle.cmd", "w+")
-    cmdf.write("gradlew build\n")
-    cmdf.close()
+    if not (os.path.isfile("runGradle.cmd")):
+        cmdf = open("runGradle.cmd", "w+")
+        cmdf.write("gradlew build\n")
+        cmdf.close()
 
     cmd = open("runCoverage.cmd", "w+")
-    cmd.write("cd \"" + ".git\CIS-580-Scripts-main" + "\"\n")
-    cmd.write("java -jar jacococli.jar report --classfiles " + " \"" + repository_directory + classdirectory + "\" --csv \""
-              + repository_directory + "\\coverageReport.csv\"")
+    cmd.write("cd \"" + ".git\CIS-580-Scripts-main\Tools" + "\"\n")
+    cmd.write(
+        "java -jar jacococli.jar report --classfiles " + " \"" + repository_directory + classdirectory + "\" --csv \""
+        + repository_directory + "\\coverageReport.csv\"")
     cmd.close()
 
     subprocess.call([r'runGradle.cmd'])
@@ -45,6 +62,7 @@ def checkCoverage(classdirectory):
 
     if os.path.isfile("runCoverage.cmd"):
         os.remove("runCoverage.cmd")
+        os.remove("runGradle.cmd")
 
         if os.path.isfile("coverageReport.csv"):
             cf = pd.read_csv(repository_directory + '\\coverageReport.csv')
@@ -62,6 +80,8 @@ def checkCoverage(classdirectory):
     return coverage
 
 
+repository_directory = git.Repo('.', search_parent_directories=True).working_tree_dir
+
 if os.path.exists('./src'):
     path = '\\src'
 else:
@@ -69,11 +89,11 @@ else:
 
 if numTestFiles == 0:
     print("Your changes do not contain any tests\nTests will now be automatically generated")
-    runEvosuite()
-    checkCoverage(path)
+    runEvosuite(repository_directory, path)
+    checkCoverage(repository_directory, path)
 else:
     print("The changes have been tested")
 
-    if checkCoverage(path) < 50:
+    if checkCoverage(repository_directory, path) < 50:
         print('The code coverage test is low (below 50)\nTest cases will now be automatically generated')
-        runEvosuite()
+        runEvosuite(repository_directory, path)
