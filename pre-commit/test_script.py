@@ -73,7 +73,7 @@ def checkCoverage(repository_directory, classdirectory):
 
             if (len(coverageList) > 0):
                 coverage = coverage / len(coverageList)
-            print(coverage, ' ', len(coverageList))
+
         else:
             print("Unable to determine the coverage")
 
